@@ -15,6 +15,8 @@
 #define LORA_DIO0 (byte)4
 #define DELAY (int)3000
 #define DELAY_VIBRATION (byte)150
+// Change this to the UID of the card you want to use
+#define C_UID "B5 67 0F AD"
 
 // Create RIFD instance
 MFRC522 mfrc522(SS_PIN, RST_PIN);
@@ -101,7 +103,7 @@ void loop()
         // Print the UID on the display
         u8x8.drawString(0, 2, content.substring(1).c_str());
         // Check if the card's UID is the correct one
-        if (content.substring(1) == "B5 67 0F AD") // change the UID of the card/cards that you want to give access
+        if (content.substring(1) == C_UID)
         {
             // If the card's UID is correct, print a message
             Serial.println("Access granted");
