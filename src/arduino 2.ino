@@ -9,13 +9,23 @@
 #define REDLED 11
 #define BLUELED 10
 #define GREENLED 9
+#define ANALOGTEMPPIN 2
+#define STEAMPIN 3
+#define SOUNDPIN 4
+#define DISPLAYDIO 5
+#define DISPLAYCLK 6
+#define DELAY 1000
 
 DHT dht(DHTPIN, DHTTYPE);
-TM1637 tm(6, 5);
+TM1637 tm(DISPLAYCLK, DISPLAYDIO);
 
 void setup()
 {
     Serial.begin(9600);
+    while (!Serial)
+    {
+        ;
+    }
     pinMode(MOTIONPIN, INPUT);
     pinMode(REDLED, OUTPUT);
     pinMode(BLUELED, OUTPUT);
@@ -26,25 +36,16 @@ void setup()
 
 void loop()
 {
-    double ATemp = analogRead(2); // Connect LM35 on Analog 0
-    ATemp = (ATemp / 1023) * 5;
-    ATemp = (5 - ATemp) / ATemp * 4700;
-    ATemp = (1 / (log(ATemp / 10000) / 3950 + 1 / (25 + 273.15))) - 273.15;
+    double ATemp = getAnalogTemp();
     Serial.print("Analog Temp:"); // Display the temperature on Serial monitor
     Serial.print(ATemp);
     Serial.println("C");
 
-    float hum = dht.readHumidity();
+    float hum = getDHTHumidity();
     // Read temperature as Celsius (the default)
-    float DHTTemp = dht.readTemperature();
-    // Check if any reads failed and exit early (to try again).
-    if (isnan(hum) || isnan(DHTTemp))
-    {
-        Serial.println(F("Failed to read from DHT sensor!"));
-        return;
-    }
+    float DHTTemp = getDHTTemp();
+
     // Compute heat index in Celsius (isFahreheit = false)
-    float hic = dht.computeHeatIndex(DHTTemp, hum, false);
     Serial.print("Humidity: ");
     Serial.print(hum);
     Serial.println("% ");
@@ -52,44 +53,105 @@ void loop()
     Serial.print(DHTTemp);
     Serial.println("°C ");
     Serial.print("Heat index: ");
-    Serial.print(hic);
+    double averageTemp = (ATemp + DHTTemp) / 2;
+    float heatIndex = getDHTHeatIndex(averageTemp, hum, false);
+    Serial.print(heatIndex);
     Serial.println("°C ");
 
-    int steam;
-    steam = analogRead(3);
+    int steam = getSteam();
     Serial.print("Moisture is ");
     Serial.println(steam);
 
-    int sound;
-    sound = analogRead(4); // connect mic sensor to Analog 0
+    int sound = getSound();
     Serial.print("Sound: ");
-    Serial.println(sound); // print the sound value on serial monitor
+    Serial.println(sound);
 
-    byte motion = digitalRead(MOTIONPIN);
+    byte motion = getMotion();
     if (motion == 1)
         Serial.println("Somebody is in this area!");
     else if (motion == 0)
         Serial.println("No one!");
 
-    int lightValue = 0;
-    lightValue = analogRead(LIGHTPIN);
+    int lightValue = getLight();
     Serial.print("Light value: ");
     Serial.println(lightValue);
 
-    for (int color = 255; color > 0; color--)
+    controlRGBLED(0, 0, 255);
+
+    controlDisplay("13.37");
+
+    delay(DELAY);
+}
+
+double getAnalogTemp()
+{
+    double ATemp = analogRead(ANALOGTEMPPIN); // Connect LM35 on Analog 0
+    ATemp = (ATemp / 1023) * 5;
+    ATemp = (5 - ATemp) / ATemp * 4700;
+    ATemp = (1 / (log(ATemp / 10000) / 3950 + 1 / (25 + 273.15))) - 273.15;
+    return ATemp;
+}
+
+float getDHTTemp()
+{
+    float DHTTemp = dht.readTemperature();
+    if (isnan(DHTTemp))
     {
-        analogWrite(11, color);
-        analogWrite(10, 255 - color);
-        analogWrite(9, 128 - color);
-        delay(2);
+        Serial.println(F("Failed to read from DHT sensor!"));
+        return 1;
     }
+    return DHTTemp;
+}
 
-    // tm.display(1234);
-    // Display float:
-    tm.display(29.65);
-    // Display String:
-    // tm.display("PLAY");
-    // tm.display("STOP");
+float getDHTHumidity()
+{
+    float DHTHum = dht.readHumidity();
+    if (isnan(DHTHum))
+    {
+        Serial.println(F("Failed to read from DHT sensor!"));
+        return 1;
+    }
+    return DHTHum;
+}
 
-    delay(1000);
+float getDHTHeatIndex(float temp, float hum, bool isFahreheit)
+{
+    float DHTHeatIndex = dht.computeHeatIndex(temp, hum, isFahreheit);
+    return DHTHeatIndex;
+}
+
+int getSteam()
+{
+    int steam = analogRead(STEAMPIN);
+    return steam;
+}
+
+int getSound()
+{
+    int sound = analogRead(SOUNDPIN);
+    return sound;
+}
+
+byte getMotion()
+{
+    byte motion = digitalRead(MOTIONPIN);
+    return motion;
+}
+
+int getLight()
+{
+    int lightValue = analogRead(LIGHTPIN);
+    return lightValue;
+}
+
+void controlRGBLED(int red, int green, int blue)
+{
+    analogWrite(REDLED, red);
+    analogWrite(GREENLED, green);
+    analogWrite(BLUELED, blue);
+}
+
+void controlDisplay(String str)
+{
+    tm.display(str);
 }
