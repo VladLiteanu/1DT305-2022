@@ -1,3 +1,4 @@
+// Include the neccessary libraries
 #include "DHT.h"
 #include <TM1637.h>
 #include <math.h>
@@ -5,6 +6,7 @@
 #include <WiFiNINA.h>
 #include "arduino_secrets.h"
 
+// Define the pins used by the sensors as constants
 #define DHTPIN 4
 #define MOTIONPIN 3
 #define DHTTYPE DHT11
@@ -19,37 +21,44 @@
 #define DISPLAYCLK 6
 #define DELAY 1000
 
+// Initialize the DHT sensor
 DHT dht(DHTPIN, DHTTYPE);
+// Initialize the TM1637 display
 TM1637 tm(DISPLAYCLK, DISPLAYDIO);
 
+// Get the wifi name and password from the secrets file
 char ssid[] = SECRET_SSID;   // your network SSID (name)
 char pass[] = SECRET_PASS;   // your network password (use for WPA, or use as key for WEP)
 int status = WL_IDLE_STATUS; // the Wifi radio's status
 
 void setup()
 {
+    // Initialize serial and wait for port to open:
     Serial.begin(9600);
     while (!Serial)
     {
         ;
     }
+    // Initialize the pins used by the sensors
     pinMode(MOTIONPIN, INPUT);
     pinMode(REDLED, OUTPUT);
     pinMode(BLUELED, OUTPUT);
     pinMode(GREENLED, OUTPUT);
+    // Initialize the DHT sensor
     dht.begin();
+    // Initialize the TM1637 display
     tm.begin();
-    // attempt to connect to Wifi network:
+    // Attempt to connect to Wifi network:
     while (status != WL_CONNECTED)
     {
         Serial.print("Attempting to connect to WPA SSID: ");
         Serial.println(ssid);
         // Connect to WPA/WPA2 network:
         status = WiFi.begin(ssid, pass);
-        // wait 10 seconds for connection:
+        // Wait 10 seconds for connection:
         delay(10000);
     }
-    // you're connected now, so print out the data:
+    // Inform the used of the connection status and information
     Serial.print("You're connected to the network");
     printCurrentNet();
     printWifiData();
@@ -57,140 +66,185 @@ void setup()
 
 void loop()
 {
+    // Get the information from the sendors
     double ATemp = getAnalogTemp();
-    Serial.print("Analog Temp:"); // Display the temperature on Serial monitor
+    float hum = getDHTHumidity();
+    float DHTTemp = getDHTTemp();
+    int steam = getSteam();
+    int sound = getSound();
+    byte motion = getMotion();
+    int lightValue = getLight();
+
+    // Print the analog temperature to the serial port
+    Serial.print("Analog Temp:");
     Serial.print(ATemp);
     Serial.println("C");
 
-    float hum = getDHTHumidity();
-    // Read temperature as Celsius (the default)
-    float DHTTemp = getDHTTemp();
-
-    // Compute heat index in Celsius (isFahreheit = false)
+    // Print the DHT humidity to the serial port
     Serial.print("Humidity: ");
     Serial.print(hum);
     Serial.println("% ");
+
+    // Print the DHT temperature to the serial port
     Serial.print("DHT Temperature: ");
     Serial.print(DHTTemp);
     Serial.println("°C ");
+
+    // Print the heat index to the serial port
     Serial.print("Heat index: ");
     double averageTemp = (ATemp + DHTTemp) / 2;
     float heatIndex = getDHTHeatIndex(averageTemp, hum, false);
     Serial.print(heatIndex);
     Serial.println("°C ");
 
-    int steam = getSteam();
+    // Print the steam to the serial port
     Serial.print("Moisture is ");
     Serial.println(steam);
 
-    int sound = getSound();
+    // Print the sound to the serial port
     Serial.print("Sound: ");
     Serial.println(sound);
 
-    byte motion = getMotion();
+    // Print the motion to the serial port
     if (motion == 1)
         Serial.println("Somebody is in this area!");
     else if (motion == 0)
         Serial.println("No one!");
 
-    int lightValue = getLight();
+    // Print the light to the serial port
     Serial.print("Light value: ");
     Serial.println(lightValue);
 
+    // Control the REG LED color
     controlRGBLED(0, 0, 255);
 
+    // Control the display output
     controlDisplay("13.37");
 
+    // Wait for one second
     delay(DELAY);
 }
 
+// Function to get the analog temperature from the sensor
 double getAnalogTemp()
 {
-    double ATemp = analogRead(ANALOGTEMPPIN); // Connect LM35 on Analog 0
+    // Read the analog temperature sensor
+    double ATemp = analogRead(ANALOGTEMPPIN);
+    // Convert the reading to voltage
     ATemp = (ATemp / 1023) * 5;
+    // Convert the voltage to temperature
     ATemp = (5 - ATemp) / ATemp * 4700;
     ATemp = (1 / (log(ATemp / 10000) / 3950 + 1 / (25 + 273.15))) - 273.15;
+    // Return the temperature
     return ATemp;
 }
 
+// Function to get the DHT temperature from the sensor
 float getDHTTemp()
 {
+    // Get the temperature from the DHT sensor
     float DHTTemp = dht.readTemperature();
+    // Check if the temperature is valid
     if (isnan(DHTTemp))
     {
         Serial.println(F("Failed to read from DHT sensor!"));
         return 1;
     }
+    // Return the temperature
     return DHTTemp;
 }
 
+// Function to get the DHT humidity from the sensor
 float getDHTHumidity()
 {
+    // Get the humidity from the DHT sensor
     float DHTHum = dht.readHumidity();
+    // Check if the humidity is valid
     if (isnan(DHTHum))
     {
         Serial.println(F("Failed to read from DHT sensor!"));
         return 1;
     }
+    // Return the humidity
     return DHTHum;
 }
 
+// Function to calculate the DHT heat index
 float getDHTHeatIndex(float temp, float hum, bool isFahreheit)
 {
+    // Calculate the heat index with the formula from the DHT sensor
     float DHTHeatIndex = dht.computeHeatIndex(temp, hum, isFahreheit);
+    // Check if the heat index is valid
     return DHTHeatIndex;
 }
 
+// Function to get the steam from the sensor
 int getSteam()
 {
+    // Read the steam value from the sensor
     int steam = analogRead(STEAMPIN);
+    // Return the steam value
     return steam;
 }
 
+// Function to get the sound from the sensor
 int getSound()
 {
+    // Read the sound value from the sensor
     int sound = analogRead(SOUNDPIN);
+    // Return the sound value
     return sound;
 }
 
+// Function to get the motion from the sensor
 byte getMotion()
 {
+    // Read the motion value 
     byte motion = digitalRead(MOTIONPIN);
+    // Return the motion value
     return motion;
 }
 
+// Function to get the light from the sensor
 int getLight()
 {
+    // Read the light value from the sensor
     int lightValue = analogRead(LIGHTPIN);
     return lightValue;
 }
 
+// Function to control the RGB LED
 void controlRGBLED(int red, int green, int blue)
 {
+    // Set each LED to the specified value
     analogWrite(REDLED, red);
     analogWrite(GREENLED, green);
     analogWrite(BLUELED, blue);
 }
 
+// Function to control the display
 void controlDisplay(String str)
 {
+    // Display the string on the display
     tm.display(str);
 }
 
+// Function to print the current Wifi information
 void printWifiData()
 {
-    // print your board's IP address:
+    // Print your board's IP address:
     IPAddress ip = WiFi.localIP();
     Serial.print("IP Address: ");
     Serial.println(ip);
     Serial.println(ip);
-    // print your MAC address:
+    // Print your MAC address:
     byte mac[6];
     WiFi.macAddress(mac);
     Serial.print("MAC address: ");
     printMacAddress(mac);
 }
 
+// Function to print the current network information
 void printCurrentNet()
 {
     // print the SSID of the network you're attached to:
@@ -212,6 +266,7 @@ void printCurrentNet()
     Serial.println();
 }
 
+// Function to print the MAC address
 void printMacAddress(byte mac[])
 {
     for (int i = 5; i >= 0; i--)
