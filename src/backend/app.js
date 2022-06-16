@@ -6,6 +6,7 @@ var cors = require('cors');
 var history = require('connect-history-api-fallback');
 
 var devicesController = require('./controllers/devices');
+var sensorDatasController = require('./controllers/sensorDatas');
 
 // Variables
 var mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/arduinoDB';
@@ -46,6 +47,7 @@ app.get('/api', function (req, res) {
 
 //Controllers
 app.use(devicesController);
+app.use(sensorDatasController);
 
 // Catch all non-error handler for api (i.e., 404 Not Found)
 app.use('/api/*', function (req, res) {
