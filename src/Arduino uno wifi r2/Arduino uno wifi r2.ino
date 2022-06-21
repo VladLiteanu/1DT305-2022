@@ -5,21 +5,24 @@
 #include <SPI.h>
 #include <WiFiNINA.h>
 #include "arduino_secrets.h"
+#include "Wire.h"
+#include <ArduinoHttpClient.h>
+#include <ArduinoJson.h>
 
 // Define the pins used by the sensors as constants
 #define DHTPIN 4
 #define MOTIONPIN 3
 #define DHTTYPE DHT11
-#define LIGHTPIN 5
+#define LIGHTPIN 0
 #define REDLED 11
 #define BLUELED 10
 #define GREENLED 9
 #define ANALOGTEMPPIN 2
 #define STEAMPIN 3
-#define SOUNDPIN 4
+#define SOUNDPIN 1
 #define DISPLAYDIO 5
 #define DISPLAYCLK 6
-#define DELAY 1000
+#define DELAY 5000
 
 // Initialize the DHT sensor
 DHT dht(DHTPIN, DHTTYPE);
@@ -30,6 +33,12 @@ TM1637 tm(DISPLAYCLK, DISPLAYDIO);
 char ssid[] = SECRET_SSID;   // your network SSID (name)
 char pass[] = SECRET_PASS;   // your network password (use for WPA, or use as key for WEP)
 int status = WL_IDLE_STATUS; // the Wifi radio's status
+char server[] = "url";
+
+WiFiClient wifi;
+HttpClient client = HttpClient(wifi, server, 80);
+
+int x = 0;
 
 void setup()
 {
@@ -39,6 +48,8 @@ void setup()
     {
         ;
     }
+    Wire.begin(9);
+
     // Initialize the pins used by the sensors
     pinMode(MOTIONPIN, INPUT);
     pinMode(REDLED, OUTPUT);
@@ -62,10 +73,40 @@ void setup()
     Serial.print("You're connected to the network");
     printCurrentNet();
     printWifiData();
+    Wire.onReceive(receiveEvent);
+    /*
+    // Send the device data
+        StaticJsonDocument<48> device;
+        device["name"] = "arduino-wifi-r2";
+        String json;
+        serializeJson(device, json);
+        String contentType = "application/json";
+
+        client.post("/api/devices", contentType, json);
+        int statusCode = client.responseStatusCode();
+        String response = client.responseBody();
+
+        Serial.print("Status code: ");
+        Serial.println(statusCode);
+        Serial.print("Response: ");
+
+        Serial.println(response);
+        */
 }
 
 void loop()
 {
+    while (status != WL_CONNECTED)
+    {
+        Serial.print("Attempting to connect to WPA SSID: ");
+        Serial.println(ssid);
+        // Connect to WPA/WPA2 network:
+        status = WiFi.begin(ssid, pass);
+        // Wait 10 seconds for connection:
+        delay(10000);
+    }
+
+    Serial.println(x);
     // Get the information from the sendors
     double ATemp = getAnalogTemp();
     float hum = getDHTHumidity();
@@ -74,47 +115,73 @@ void loop()
     int sound = getSound();
     byte motion = getMotion();
     int lightValue = getLight();
-
-    // Print the analog temperature to the serial port
-    Serial.print("Analog Temp:");
-    Serial.print(ATemp);
-    Serial.println("C");
-
-    // Print the DHT humidity to the serial port
-    Serial.print("Humidity: ");
-    Serial.print(hum);
-    Serial.println("% ");
-
-    // Print the DHT temperature to the serial port
-    Serial.print("DHT Temperature: ");
-    Serial.print(DHTTemp);
-    Serial.println("°C ");
-
-    // Print the heat index to the serial port
-    Serial.print("Heat index: ");
     double averageTemp = (ATemp + DHTTemp) / 2;
     float heatIndex = getDHTHeatIndex(averageTemp, hum, false);
-    Serial.print(heatIndex);
-    Serial.println("°C ");
 
-    // Print the steam to the serial port
-    Serial.print("Moisture is ");
-    Serial.println(steam);
+    StaticJsonDocument<200> sensorData;
+    sensorData["sound"] = sound;
+    sensorData["analogTemp"] = ATemp;
+    sensorData["dhtTemp"] = DHTTemp;
+    sensorData["humidity"] = hum;
+    sensorData["heatIndex"] = heatIndex;
+    sensorData["light"] = lightValue;
+    sensorData["motion"] = motion;
+    sensorData["steam"] = steam;
+    sensorData["device"] = "62b233763ff0f0d7de03b867";
 
-    // Print the sound to the serial port
-    Serial.print("Sound: ");
-    Serial.println(sound);
+    String json;
+    serializeJson(sensorData, json);
+    String contentType = "application/json";
 
-    // Print the motion to the serial port
-    if (motion == 1)
-        Serial.println("Somebody is in this area!");
-    else if (motion == 0)
-        Serial.println("No one!");
+    client.post("/api/sensorDatas", contentType, json);
+    int statusCode = client.responseStatusCode();
+    String response = client.responseBody();
 
-    // Print the light to the serial port
-    Serial.print("Light value: ");
-    Serial.println(lightValue);
+    Serial.print("Status code: ");
+    Serial.println(statusCode);
+    Serial.print("Response: ");
+    Serial.println(response);
 
+    /*
+        // Print the analog temperature to the serial port
+        Serial.print("Analog Temp:");
+        Serial.print(ATemp);
+        Serial.println("C");
+
+        // Print the DHT humidity to the serial port
+        Serial.print("Humidity: ");
+        Serial.print(hum);
+        Serial.println("% ");
+
+        // Print the DHT temperature to the serial port
+        Serial.print("DHT Temperature: ");
+        Serial.print(DHTTemp);
+        Serial.println("°C ");
+
+        // Print the heat index to the serial port
+        Serial.print("Heat index: ");
+
+        Serial.print(heatIndex);
+        Serial.println("°C ");
+
+        // Print the steam to the serial port
+        Serial.print("Moisture is ");
+        Serial.println(steam);
+
+        // Print the sound to the serial port
+        Serial.print("Sound: ");
+        Serial.println(sound);
+
+        // Print the motion to the serial port
+        if (motion == 1)
+            Serial.println("Somebody is in this area!");
+        else if (motion == 0)
+            Serial.println("No one!");
+
+        // Print the light to the serial port
+        Serial.print("Light value: ");
+        Serial.println(lightValue);
+*/
     // Control the REG LED color
     controlRGBLED(0, 0, 255);
 
@@ -123,6 +190,11 @@ void loop()
 
     // Wait for one second
     delay(DELAY);
+}
+
+void receiveEvent(int bytes)
+{
+    x = Wire.read(); // read one character from the I2C
 }
 
 // Function to get the analog temperature from the sensor
@@ -199,7 +271,7 @@ int getSound()
 // Function to get the motion from the sensor
 byte getMotion()
 {
-    // Read the motion value 
+    // Read the motion value
     byte motion = digitalRead(MOTIONPIN);
     // Return the motion value
     return motion;
