@@ -35,6 +35,33 @@ router.get('/api/sensorDatas/:id', (req, res, next) => {
     })
 })
 
+// Get the sensor data from a specific date
+router.get('/api/sensorDatas/:date', (req, res, next) => {
+    var date = req.params.date
+    if (!(date.match(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/))) {
+        return res.status(404).json({
+            "message": "Invalid date format"
+        })
+    }
+    sensorData.find({
+        time: {
+            $gte: new Date(date),
+            $lt: new Date(date + "T23:59:59.999Z")
+        }
+    }, (err, sensorDatas) => {
+        if (err) {
+            return next(err)
+        }
+        if (sensorDatas == null) {
+            return res.status(404).json({
+                "message": "SensorData not found for that date."
+            })
+        }
+        res.json(sensorDatas)
+    })
+})
+
+
 // Post sensorData
 router.post('/api/sensorDatas', (req, res, next) => {
     var sensorData = new sensorData(req.body)
