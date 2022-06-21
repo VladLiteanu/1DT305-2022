@@ -10,7 +10,7 @@ var sensorDatasController = require('./controllers/sensorDatas');
 
 // Variables
 var mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/arduinoDB';
-var port = process.env.PORT || 3000;
+var port = process.env.PORT || 3001;
 
 // Connect to MongoDB
 mongoose.connect(mongoURI, {

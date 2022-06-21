@@ -9,7 +9,7 @@ router.get('/api/devices', (req, res, next) => {
             return next(err)
         }
         res.json({
-            "studios": Device
+            "devices": Device
         })
     })
 })

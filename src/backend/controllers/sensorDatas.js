@@ -1,10 +1,10 @@
 var express = require('express')
 var router = express.Router()
-var sensorData = require('../models/sensorData')
+var SensorData = require('../models/sensorData')
 
 // get all sensorDatas
 router.get('/api/sensorDatas', (req, res, next) => {
-    sensorData.find((err, sensorDatas) => {
+    SensorData.find((err, sensorDatas) => {
         if (err) {
             return next(err)
         }
@@ -22,7 +22,7 @@ router.get('/api/sensorDatas/:id', (req, res, next) => {
             "message": "Item not found"
         })
     }
-    sensorData.findById(id, (err, sensorData) => {
+    SensorData.findById(id, (err, sensorData) => {
         if (err) {
             return next(err)
         }
@@ -43,7 +43,7 @@ router.get('/api/sensorDatas/:date', (req, res, next) => {
             "message": "Invalid date format"
         })
     }
-    sensorData.find({
+    SensorData.find({
         time: {
             $gte: new Date(date),
             $lt: new Date(date + "T23:59:59.999Z")
@@ -64,7 +64,13 @@ router.get('/api/sensorDatas/:date', (req, res, next) => {
 
 // Post sensorData
 router.post('/api/sensorDatas', (req, res, next) => {
-    var sensorData = new sensorData(req.body)
+    var sensorData = new SensorData(req.body)
+    // Check if the request body contains the a device id 
+    if (!(req.body.device)) {
+        return res.status(400).json({
+            "message": "Device id is required"
+        })
+    }
     sensorData.save((err, sensorData) => {
         if (err) {
             return next(err)
@@ -81,7 +87,7 @@ router.patch('/api/sensorDatas/:id', (req, res, next) => {
             "message": "Item not found"
         })
     }
-    sensorData.findByIdAndUpdate(id, req.body, (err, sensorData) => {
+    SensorData.findByIdAndUpdate(id, req.body, (err, sensorData) => {
         if (err) {
             return next(err)
         }
@@ -102,7 +108,7 @@ router.delete('/api/sensorDatas/:id', (req, res, next) => {
             "message": "Item not found"
         })
     }
-    sensorData.findByIdAndRemove(id, (err, sensorData) => {
+    SensorData.findByIdAndRemove(id, (err, sensorData) => {
         if (err) {
             return next(err)
         }
@@ -117,13 +123,12 @@ router.delete('/api/sensorDatas/:id', (req, res, next) => {
 
 // delete all sensorDatas
 router.delete('/api/sensorDatas', (req, res, next) => {
-    sensorData.remove({}, (err, sensorData) => {
+    SensorData.remove({}, (err, sensorData) => {
         if (err) {
             return next(err)
         }
         res.json(sensorData)
     })
 })
-
 
 module.exports = router;
