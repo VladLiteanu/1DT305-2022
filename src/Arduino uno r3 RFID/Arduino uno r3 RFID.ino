@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <U8x8lib.h>
 #include <LoRa.h>
+#include <Wire.h>
 
 // Constants to store pins and delays
 #define SS_PIN (byte)10
@@ -13,7 +14,7 @@
 #define LORA_NSS (byte)2
 #define LORA_RESET (byte)3
 #define LORA_DIO0 (byte)4
-#define DELAY (int)3000
+#define DELAY (int)2000
 #define DELAY_VIBRATION (byte)150
 // Change this to the UID of the card you want to use
 #define C_UID "B5 67 0F AD"
@@ -28,16 +29,18 @@ int counter = 0;
 
 void setup()
 {
-    // Set the font of the text on the display
+    // Set the display font
     u8x8.setFont(u8x8_font_victoriamedium8_r);
+    // Initialize the display
+    u8x8.begin();
+    // Start I2C communication 
+    Wire.begin(9);
     // Initiate a serial communication
     Serial.begin(9600);
     // Initiate SPI bus
     SPI.begin();
     // Initiate the RFID module
     mfrc522.PCD_Init();
-    // Initialize the display
-    u8x8.begin();
     // Tell the display to show what is sent to it
     u8x8.setPowerSave(0);
     // Initiate the touch and vibration modules
@@ -112,6 +115,12 @@ void loop()
             analogWrite(VIBRATION, DELAY_VIBRATION);
             delay(DELAY_VIBRATION);
             analogWrite(VIBRATION, 0);
+            // transmit to device #9
+            Wire.beginTransmission(9);
+            // Send data
+            Wire.write(1);
+            // stop transmitting
+            Wire.endTransmission();
             // Send a message with the LoRa module
             sendMessage(content);
             // Increment the counter
@@ -123,6 +132,12 @@ void loop()
             Serial.println("Access denied");
             u8x8.drawString(0, 3, "Access denied");
             // Make the vibration module vibrate
+            // transmit to device #9
+            Wire.beginTransmission(9);
+            // Send data
+            Wire.write(0);
+            // stop transmitting
+            Wire.endTransmission();
             analogWrite(VIBRATION, DELAY_VIBRATION);
             delay(DELAY_VIBRATION);
             analogWrite(VIBRATION, 0);
@@ -154,6 +169,6 @@ void sendMessage(String message)
     LoRa.beginPacket();
     LoRa.print(message);
     LoRa.endPacket();
-    Serial.print("Message sent!");
+    Serial.print("Message sent with lora!");
     u8x8.drawString(0, 5, "Message sent!");
 }
