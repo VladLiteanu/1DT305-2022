@@ -1,12 +1,11 @@
-import { render } from "react-dom";
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 import Home from './home/index';
 
-render(
-  <BrowserRouter>
-    <Routes>
-      <Route path="/" element={<Home />} />
-    </Routes>
-  </BrowserRouter>,
-  document.getElementById("root")
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <Home />
+  </React.StrictMode>
 );
