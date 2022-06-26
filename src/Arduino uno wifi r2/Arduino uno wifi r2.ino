@@ -74,6 +74,7 @@ void setup()
     printCurrentNet();
     printWifiData();
     Wire.onReceive(receiveEvent);
+    
     /*
     // Send the device data
         StaticJsonDocument<48> device;
@@ -96,6 +97,7 @@ void setup()
 
 void loop()
 {
+    // Reconnect to the wifi network if it is disconnected
     while (status != WL_CONNECTED)
     {
         Serial.print("Attempting to connect to WPA SSID: ");
@@ -107,42 +109,52 @@ void loop()
     }
 
     Serial.println(x);
-    // Get the information from the sendors
-    double ATemp = getAnalogTemp();
-    float hum = getDHTHumidity();
-    float DHTTemp = getDHTTemp();
-    int steam = getSteam();
-    int sound = getSound();
-    byte motion = getMotion();
-    int lightValue = getLight();
-    double averageTemp = (ATemp + DHTTemp) / 2;
-    float heatIndex = getDHTHeatIndex(averageTemp, hum, false);
+    // Check if the card correct has been scaned
+    if (x)
+    {
+        // Get the information from the sendors
+        double ATemp = getAnalogTemp();
+        float hum = getDHTHumidity();
+        float DHTTemp = getDHTTemp();
+        int steam = getSteam();
+        int sound = getSound();
+        byte motion = getMotion();
+        int lightValue = getLight();
+        double averageTemp = (ATemp + DHTTemp) / 2;
+        float heatIndex = getDHTHeatIndex(averageTemp, hum, false);
 
-    StaticJsonDocument<200> sensorData;
-    sensorData["sound"] = sound;
-    sensorData["analogTemp"] = ATemp;
-    sensorData["dhtTemp"] = DHTTemp;
-    sensorData["humidity"] = hum;
-    sensorData["heatIndex"] = heatIndex;
-    sensorData["light"] = lightValue;
-    sensorData["motion"] = motion;
-    sensorData["steam"] = steam;
-    sensorData["device"] = "62b233763ff0f0d7de03b867";
+        // Create a JSON object to store the data
+        StaticJsonDocument<200> sensorData;
+        // Add the data to the JSON object
+        sensorData["sound"] = sound;
+        sensorData["analogTemp"] = ATemp;
+        sensorData["dhtTemp"] = DHTTemp;
+        sensorData["humidity"] = hum;
+        sensorData["heatIndex"] = heatIndex;
+        sensorData["light"] = lightValue;
+        sensorData["motion"] = motion;
+        sensorData["steam"] = steam;
+        sensorData["device"] = "62b233763ff0f0d7de03b867";
 
-    String json;
-    serializeJson(sensorData, json);
-    String contentType = "application/json";
+        // Serialize the JSON object to a string
+        String json;
+        serializeJson(sensorData, json);
+        // Set the content type for the http request
+        String contentType = "application/json";
 
-    client.post("/api/sensorDatas", contentType, json);
-    int statusCode = client.responseStatusCode();
-    String response = client.responseBody();
+        // Send the data to the server
+        client.post("/api/sensorDatas", contentType, json);
+        // Get the status code of the response
+        int statusCode = client.responseStatusCode();
+        // Get the response body
+        String response = client.responseBody();
 
-    Serial.print("Status code: ");
-    Serial.println(statusCode);
-    Serial.print("Response: ");
-    Serial.println(response);
+        // Print the status code and response body
+        Serial.print("Status code: ");
+        Serial.println(statusCode);
+        Serial.print("Response: ");
+        Serial.println(response);
 
-    /*
         // Print the analog temperature to the serial port
         Serial.print("Analog Temp:");
         Serial.print(ATemp);
@@ -181,12 +193,17 @@ void loop()
         // Print the light to the serial port
         Serial.print("Light value: ");
         Serial.println(lightValue);
-*/
-    // Control the REG LED color
-    controlRGBLED(0, 0, 255);
 
-    // Control the display output
-    controlDisplay("13.37");
+        // Control the REG LED color
+        controlRGBLED(0, 0, 255);
+
+        // Control the display output
+        controlDisplay("13.37");
+    }
+    else
+    {
+        Serial.println("Please scan your card to continue");
+    }
 
     // Wait for one second
     delay(DELAY);
