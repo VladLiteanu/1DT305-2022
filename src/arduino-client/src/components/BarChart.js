@@ -27,6 +27,7 @@ class Chart extends React.Component {
                     width={400}
                     height={600}
                     options={{
+                        responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
                             title: {
