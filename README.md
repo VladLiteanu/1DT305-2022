@@ -71,7 +71,7 @@ For more information, please refer to the following documentation:
 
 Due to the large number of sensors used, I couldn't find an online circuit creator with all of them. Therefore I will create it by hand using Photoshop. No parts of the following image are at the correct scale. 
 
-
+<img src="https://user-images.githubusercontent.com/50659238/176283393-8474ce47-be38-49a0-946b-d5d3f9cec6a7.jpg" width="500">
 
 
 
