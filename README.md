@@ -40,6 +40,7 @@ These are sensors we can interact with or give us information about our surround
 - The RFID sensor will be used to read information from a card.
 - The display is used for showing information about the RIFD sensor and cards.
 - The battery holder is used for powering one of the Arduino boards. 
+- Lora can be used to transmit data between the Arduino borards.
 
 ## Computer setup
 
@@ -58,7 +59,7 @@ By navigating to the "Tools" menu at the top of the IDE and then clicking on the
 
 For this tutorial, we will use the following libraries: DHT sensor library by Adafruit, TM1637 Driver by AKJ, math.h, SPI.h, WiFiNINA, Wire.h, ArduinoHttpClient, ArduinoJson by Benoit Blanchon, MFRC522 by GithubCommunity, Arduino.h, and U8g2 by Oliver.
 
-Some of these are installed by default, and some need to be installed from the library manager.
+Some of the libraries are installed by default, and some need to be installed from the library manager.
 
 For uploading code to the boards, please follow the official documentation [here](https://support.arduino.cc/hc/en-us/articles/4733418441116-Upload-a-sketch-in-Arduino-IDE).
 
@@ -69,11 +70,76 @@ For more information, please refer to the following documentation:
 
 ## Putting everything together
 
-Due to the large number of sensors used, I couldn't find an online circuit creator with all of them. Therefore I will create it by hand using Photoshop. No parts of the following image are at the correct scale. 
+Due to the large number of sensors used, I couldn't find an online circuit creator with all of them. Therefore I created it with Photoshop. No parts of the following image are at the correct scale. 
 
-<img src="https://user-images.githubusercontent.com/50659238/176286253-44138137-137a-42c6-964e-5c11c267062c.jpg" width="700">
+<img src="https://user-images.githubusercontent.com/50659238/176761089-8eda45cf-c92c-4763-98fa-4840728105f3.jpg" width="700">
 
+Note that the red wires represent power, and the black ones are the ground. The other colors are standard connections to the Arduino.
 
+Keep in mind that the RFID reader and Lora use 3.3V while everything else uses 5V. 
 
+The Lora module is not portrayed in the diagram above because it wasn't working and I ended up not using it. For a tutorial on how to connect it, you can follow [this](https://iotdesignpro.com/projects/lora-communication-between-two-arduino-using-LoRa-Module-SX1278). You can use pins 10-13 for both the RFID reader and Lora simultaneously.
 
+## Platform 
+
+Because of my previous programming experiences, I decided to make the assignment more of a challenge by not using any preexisting platforms and making my own. 
+
+For the server's database, I use MongoDB Atlas to store everything in the cloud and make the data accessible from anywhere. 
+I created a simple ER diagram to showcase how the data is stored and how it interacts. 
+
+<img src="https://user-images.githubusercontent.com/50659238/176765003-ed0b1bb4-7510-4e70-9b38-b41e3c52a5e4.png" width="500">
+
+The server was created using Nodejs and hosted on Heroku. The server and database are connected for data transfer. The source code for the server can be found in [/src/backend](https://github.com/VladLiteanu/1DT305-2022/tree/main/src/backend).
+
+For the frontend, I again went with Nodejs as well as React and Chartjs for displaying the data neatly. The source code can be found in [/src/arduino-client](https://github.com/VladLiteanu/1DT305-2022/tree/main/src/arduino-client).
+
+## The Code
+
+As mentioned above, I didn't go with any preexisting platforms, and I will briefly explain how to run the front and backend. 
+
+### Running the server 
+
+Firstly you need to install Nodejs from [here](https://nodejs.org/en/download/). 
+
+For instructions, follow the official windows documentation [here](https://docs.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-on-windows).  
+
+You will also need to choose whether to run the database locally or in the cloud. For running it locally, you would need to install MongoDB from [here](https://www.mongodb.com/try/download/community).  
+
+For creating a MongoDB Atlas cluster, follow the first ~4 minutes of [this](https://youtu.be/084rmLU1UgA) video and either replace what is in the quotes in the app.js file or add it as a global variable as MONGODB_URI.
+
+```js
+var mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/arduinoDB';
+```
+
+You can clone or download the source code from this repository. Once that is done, you need to navigate to /src/backend and run the following commands one at a time. 
+
+```
+npm install
+npm start
+```
+
+### Running the frontend
+
+You'll firstly need to install Nodejs as described above. 
+
+Navigate to /src/arduino-client and run the same commands as before. 
+
+```
+npm install
+npm start
+```
+
+### Arduino code
+
+Before uploading the code for the Arduino Uno wifi, you'll need to change the following line in "src/Arduino uno wifi r2/Arduino uno wifi r2.ino" file to connect to your server. 
+
+```cpp
+char server[] = "url";
+```
+
+You might also need to change the path on line 146 depending on how the server is configured. 
+
+For sending the device name, uncomment the code in the setup function. 
+
+## Transmitting the data
 
