@@ -120,6 +120,11 @@ npm install
 npm start
 ```
 
+If everything went well, you should see this message.
+
+<img src="https://user-images.githubusercontent.com/50659238/176967104-5ca7ac55-6c52-4243-9871-990906f55033.png" width="700">
+
+
 ### Running the frontend
 
 You'll firstly need to install Nodejs as described above. 
@@ -130,6 +135,11 @@ Navigate to /src/arduino-client and run the same commands as before.
 npm install
 npm start
 ```
+
+If everything went well, you should see this message and a new browser window should open.
+
+<img src="https://user-images.githubusercontent.com/50659238/176967315-cd1244ed-6616-4b3b-8fe3-3b817fba0790.png" width="500">
+
 
 ### Arduino code
 
