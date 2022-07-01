@@ -80,6 +80,8 @@ Keep in mind that the RFID reader and Lora use 3.3V while everything else uses 5
 
 The Lora module is not portrayed in the diagram above because it wasn't working and I ended up not using it. For a tutorial on how to connect it, you can follow [this](https://iotdesignpro.com/projects/lora-communication-between-two-arduino-using-LoRa-Module-SX1278). You can use pins 10-13 for both the RFID reader and Lora simultaneously.
 
+Because Lora did not work correctly for me, the connection between the Arduino boards had to be made through I2C. As a result, because the OLED display also uses I2C, it stops working while the Arduino boards are connected to each other. This persists even if I specify different addresses. However, the display does work if the boards are disconnected from each other.
+
 ## Platform 
 
 Because of my previous programming experiences, I decided to make the assignment more of a challenge by not using any preexisting platforms and making my own. 
@@ -142,4 +144,41 @@ You might also need to change the path on line 146 depending on how the server i
 For sending the device name, uncomment the code in the setup function. 
 
 ## Transmitting the data
+
+The data from the Arduino Uno r3 is transmitted through I2C whenever a card is scanned, and we create an interrupt to make sure that the data is received by the other Arduino. 
+
+The sensor data from the Arduino Uno Wifi is collected and sent every 5 seconds as stated by the delay constant, but it can easily be changed to transfer more or less frequently.
+
+The data from the sensors is compiled into a JSON object and is RESTfully sent through HTTP to the server along with the necessary header data. 
+
+As mentioned previously, the original plan was to use both Lora and Wifi. Still, in the end, we only use Wifi for wireless transfer and I2C for communication between the two Arduino boards. 
+
+The choice to use HTTP requests instead of MQTT or other similar transport protocols is because doing it this way makes it possible to gather and transfer data from anywhere as long as there is a Wifi connection with no additional setup or program installation necessary. If the setup works at home, it will also work elsewhere, as long as you provide the Wifi credentials. 
+
+Taking it a step further, one could, in theory, create a mobile hotspot and send the environmental data wherever you are, telling you if you are justified to feel uncomfortable because of the heat. 
+
+While Wifi does consume more energy than other alternatives like Lora, the range is practically infinite as long as you can find a Wifi hotspot. 
+
+## Presenting the data
+
+The frontend of the project is, as stated before, built by me using Nodejs, React, and Chartjs. It is a simple application for displaying the data in charts and is easily upgradable and modifiable. It was also made reactive down to a width of around 600px, making it possible to correctly view the data on small and big displays. 
+
+The data is displayed on a line graph with the information on the Y-axis and the time on the X-axis, showing how the data changes over time.
+
+<img src="https://user-images.githubusercontent.com/50659238/176964807-9175ef38-9164-4434-a709-cbbc31f13507.png" width="900">
+
+You can also hover over any part of the graph to see the exact data stored in the database. 
+
+<img src="https://user-images.githubusercontent.com/50659238/176965182-2244bf44-bdcc-490c-82f9-eabd4558d262.png" width="900">
+
+The data from the sensors is saved in the database every time the Arduino sends a post request. The frontend and Arduino requests must go through the server to access the database. The following image shows what the data looks like inside the database using MongoDB Atlas.
+
+<img src="https://user-images.githubusercontent.com/50659238/176965732-da42ddf9-2050-49be-89a3-a6323f28bfa0.png" width="900">
+
+This is what the server response is when sending a get request for the data. The server also contains some unused CRUD functions that can be used for deleting or updating data.
+
+<img src="https://user-images.githubusercontent.com/50659238/176966356-4a0dae88-0839-49fe-9820-41bfb9d7f6db.png" width="900">
+
+## Finalizing the design
+
 
