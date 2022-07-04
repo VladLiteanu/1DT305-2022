@@ -53,7 +53,7 @@ After installing the IDE, you will be welcomed by an interface that looks someth
 
 <img src="https://user-images.githubusercontent.com/50659238/176256639-39688f83-9ca3-40c3-8fe9-9dc2bda8a748.png" width="500">
 
-From here, you can write your code, and when you are satisfied, you can press the verify button on the top left to compile the code and check for errors.
+From here, you can write your code, or open mine and when you are satisfied, you can press the verify button on the top left to compile the code and check for errors.
 
 By navigating to the "Tools" menu at the top of the IDE and then clicking on the "Manage Libraries", a new window will pop up where you can search and install extra libraries to use in your code. 
 
@@ -153,6 +153,15 @@ You might also need to change the path on line 146 depending on how the server i
 
 For sending the device name, uncomment the code in the setup function. 
 
+Remember that you'll have to modify the "arduino_secrets.h" file in "src/Arduino uno wifi r2/" and add your wifi credentials. 
+
+```cpp
+#define SECRET_SSID "The Wifi SSID(name)"
+#define SECRET_PASS "The Wifi password"
+```
+
+The segment display and RGB LED on the Arduino Uno Wifi are currently not in use, but I've created functions for controlling them. 
+
 ## Transmitting the data
 
 The data from the Arduino Uno r3 is transmitted through I2C whenever a card is scanned, and we create an interrupt to make sure that the data is received by the other Arduino. 
@@ -171,7 +180,9 @@ While Wifi does consume more energy than other alternatives like Lora, the range
 
 ## Presenting the data
 
-The frontend of the project is, as stated before, built by me using Nodejs, React, and Chartjs. It is a simple application for displaying the data in charts and is easily upgradable and modifiable. It was also made reactive down to a width of around 600px, making it possible to correctly view the data on small and big displays. 
+The frontend of the project is, as stated before, built by me using Nodejs, React, and Chartjs. It is a simple application for displaying the data in charts and is easily upgradable and modifiable. It was also made reactive down to a width of around 600px, making it possible to correctly view the data on small and big displays.
+
+The database is stored on AWS servers in Stockholm through MongoDB. Because of the proximity, the average request latency is under 100ms. 
 
 The data is displayed on a line graph with the information on the Y-axis and the time on the X-axis, showing how the data changes over time.
 
@@ -190,5 +201,15 @@ This is what the server response is when sending a get request for the data. The
 <img src="https://user-images.githubusercontent.com/50659238/176966356-4a0dae88-0839-49fe-9820-41bfb9d7f6db.png" width="900">
 
 ## Finalizing the design
+
+Here are a few pictures of the finalized project. One of the Lora modules is still connected to one of the Arduino boards, but as stated before, it's not functional. 
+
+|  |  |
+| --- | --- |
+| <img src="https://user-images.githubusercontent.com/50659238/177159290-74212362-907a-4f7c-bd71-450dbfea5d23.jpg" width="600"> | <img src="https://user-images.githubusercontent.com/50659238/177159479-d9a6e8d4-d1b9-4544-a681-bee57e89e308.jpg" width="600"> |  
+| <img src="https://user-images.githubusercontent.com/50659238/177159753-cc3e6ce9-1a71-4d7b-a74e-265dc1f45edd.jpg" width="600"> | <img src="https://user-images.githubusercontent.com/50659238/177159844-d8fa91c6-c1c3-4438-a470-727629a593f6.jpg" width="600"> |
+| <img src="https://user-images.githubusercontent.com/50659238/177160004-5df3caec-717c-41f4-91a1-dcf6941ec1b6.jpg" width="600"> | <img src="https://user-images.githubusercontent.com/50659238/177160110-e0d14c38-e22b-4ecf-a194-ab5c0097ec27.jpg" width="600"> |
+
+Overall, the project went well, even if I had to use I2C instead of Lora disabling the display in the process. The server was made to be upgradable, so you could easily add or remove sensors. Adding more graphs to the frontend can be quickly done by changing the "home.js" file.
 
 
